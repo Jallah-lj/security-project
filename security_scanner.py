@@ -9,6 +9,7 @@ import re
 import hashlib
 from pathlib import Path
 from typing import List, Dict
+from fnmatch import fnmatch
 from colorama import init, Fore, Style
 
 init(autoreset=True)
@@ -25,6 +26,13 @@ class SecurityScanner:
             '.pytest_cache', '.tox', 'build', 'dist',
             '*.egg-info', '.mypy_cache'
         }
+    
+    def _should_exclude_dir(self, dirname: str) -> bool:
+        """Check if a directory should be excluded from scanning"""
+        for pattern in self.exclude_dirs:
+            if fnmatch(dirname, pattern):
+                return True
+        return False
         
     def scan(self) -> List[Dict]:
         """Run all security scans"""
@@ -52,7 +60,7 @@ class SecurityScanner:
         
         for root, dirs, files in os.walk(self.directory):
             # Remove excluded directories from the search
-            dirs[:] = [d for d in dirs if d not in self.exclude_dirs]
+            dirs[:] = [d for d in dirs if not self._should_exclude_dir(d)]
             
             for file in files:
                 if file.endswith(('.py', '.js', '.java', '.php', '.env')):
@@ -87,7 +95,7 @@ class SecurityScanner:
         
         for root, dirs, files in os.walk(self.directory):
             # Remove excluded directories from the search
-            dirs[:] = [d for d in dirs if d not in self.exclude_dirs]
+            dirs[:] = [d for d in dirs if not self._should_exclude_dir(d)]
             
             for file in files:
                 if file.endswith('.py'):
@@ -114,7 +122,7 @@ class SecurityScanner:
         
         for root, dirs, files in os.walk(self.directory):
             # Remove excluded directories from the search
-            dirs[:] = [d for d in dirs if d not in self.exclude_dirs]
+            dirs[:] = [d for d in dirs if not self._should_exclude_dir(d)]
             
             for file in files:
                 filepath = os.path.join(root, file)
