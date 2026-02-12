@@ -29,6 +29,10 @@ class SecurityScanner:
     
     def _should_exclude_dir(self, dirname: str) -> bool:
         """Check if a directory should be excluded from scanning"""
+        # First check for exact match (faster)
+        if dirname in self.exclude_dirs:
+            return True
+        # Then check for pattern match (slower but handles wildcards)
         for pattern in self.exclude_dirs:
             if fnmatch(dirname, pattern):
                 return True
