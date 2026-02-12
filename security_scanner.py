@@ -18,10 +18,18 @@ class SecurityScanner:
     def __init__(self, directory: str = "."):
         self.directory = directory
         self.vulnerabilities = []
+        # Directories to exclude from scanning
+        self.exclude_dirs = {
+            'venv', 'env', '.venv', '.env',
+            'node_modules', '.git', '__pycache__',
+            '.pytest_cache', '.tox', 'build', 'dist',
+            '*.egg-info', '.mypy_cache'
+        }
         
     def scan(self) -> List[Dict]:
         """Run all security scans"""
-        print(f"{Fore.CYAN}Starting security scan...{Style.RESET_ALL}\n")
+        print(f"{Fore.CYAN}Starting security scan...{Style.RESET_ALL}")
+        print(f"{Fore.CYAN}Excluding directories: {', '.join(sorted(self.exclude_dirs))}{Style.RESET_ALL}\n")
         
         self.check_hardcoded_secrets()
         self.check_insecure_functions()
@@ -42,7 +50,10 @@ class SecurityScanner:
             'AWS Key': r'AKIA[0-9A-Z]{16}',
         }
         
-        for root, _, files in os.walk(self.directory):
+        for root, dirs, files in os.walk(self.directory):
+            # Remove excluded directories from the search
+            dirs[:] = [d for d in dirs if d not in self.exclude_dirs]
+            
             for file in files:
                 if file.endswith(('.py', '.js', '.java', '.php', '.env')):
                     filepath = os.path.join(root, file)
@@ -74,7 +85,10 @@ class SecurityScanner:
             'subprocess without shell=False': r'subprocess\.(call|run|Popen).*shell\s*=\s*True',
         }
         
-        for root, _, files in os.walk(self.directory):
+        for root, dirs, files in os.walk(self.directory):
+            # Remove excluded directories from the search
+            dirs[:] = [d for d in dirs if d not in self.exclude_dirs]
+            
             for file in files:
                 if file.endswith('.py'):
                     filepath = os.path.join(root, file)
@@ -98,7 +112,10 @@ class SecurityScanner:
         """Check for overly permissive file permissions"""
         print(f"{Fore.YELLOW}[3/4] Checking file permissions...{Style.RESET_ALL}")
         
-        for root, _, files in os.walk(self.directory):
+        for root, dirs, files in os.walk(self.directory):
+            # Remove excluded directories from the search
+            dirs[:] = [d for d in dirs if d not in self.exclude_dirs]
+            
             for file in files:
                 filepath = os.path.join(root, file)
                 try:
